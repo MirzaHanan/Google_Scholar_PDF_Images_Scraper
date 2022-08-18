@@ -18,10 +18,12 @@ import os
 
 # path = input("Enter The Path to Save Images : ")
 
-
-Tk().withdraw()
-path =  askdirectory(title="Select a folder")
-print(path)
+# Tk().withdraw()
+# path = ''
+# path =  str(askdirectory(title="Select a folder"))
+# print(type(path))
+# print(path)
+path = input("Enter The Path to Save Images : ")
 url = input("Enter the URL (Google Scholar Search result) : ") 
 
 
@@ -37,15 +39,24 @@ url = input("Enter the URL (Google Scholar Search result) : ")
 
 # Check whether the specified
 # path exists or not
-isExist = os.path.exists(path)
-if isExist == False:
-    os.mkdir(path)
+# isExist = os.path.exists(path)
+# if isExist == False:
+#     os.mkdir(path)
     
 
-chrome_options = webdriver.ChromeOptions()
-prefs = {'download.default_directory' : path}
-chrome_options.add_experimental_option('prefs', prefs)
-driver = webdriver.Chrome(chrome_options=chrome_options)
+# chrome_options = webdriver.ChromeOptions()
+# prefs = {'download.default_directory' : path}
+# chrome_options.add_experimental_option('prefs', prefs)
+# driver = webdriver.Chrome(chrome_options=chrome_options)
+
+options = webdriver.ChromeOptions()
+options.add_experimental_option('prefs', {
+"download.default_directory": path, #Change default directory for downloads
+"download.prompt_for_download": False, #To auto download the file
+"download.directory_upgrade": True,
+"plugins.always_open_pdf_externally": True #It will not show PDF directly in chrome
+})
+driver = webdriver.Chrome(options=options)
 
 try:
     driver.get(url)
@@ -74,7 +85,7 @@ def getDownLoadedFileName(waitTime):
                 return driver.execute_script("return document.querySelector('downloads-manager').shadowRoot.querySelector('#downloadsList downloads-item').shadowRoot.querySelector('div#content  #file-link').text")
         except:
             print("****************Cannot Get Name of Download File*************** ")
-        time.sleep(1)
+        time.sleep(3)
         if time.time() > endTime:
             break
 
@@ -123,8 +134,17 @@ for single_result in search_results:
 # Open a new tab
 driver.execute_script("window.open()")
 for l in link:
+    
     # switch to new tab
     driver.switch_to.window(driver.window_handles[-1])
+    if  l.split(".")[-1] == "pdf":
+        try:
+            driver.get(l)
+            scrapImages()    
+            driver.close()
+            continue
+        except:
+            pass 
     
     new_link = 'https://sci-hub.hkvisa.net/' + l
     # navigate to new link
