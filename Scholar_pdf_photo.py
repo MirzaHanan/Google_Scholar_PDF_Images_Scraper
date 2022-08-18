@@ -21,7 +21,7 @@ import os
 
 Tk().withdraw()
 path =  askdirectory(title="Select a folder")
-
+print(path)
 url = input("Enter the URL (Google Scholar Search result) : ") 
 
 
@@ -46,8 +46,11 @@ chrome_options = webdriver.ChromeOptions()
 prefs = {'download.default_directory' : path}
 chrome_options.add_experimental_option('prefs', prefs)
 driver = webdriver.Chrome(chrome_options=chrome_options)
-    
-driver.get(url)
+
+try:
+    driver.get(url)
+except :
+    print("Enter valid URL")
 link = []
 
 def getDownLoadedFileName(waitTime):
@@ -102,8 +105,8 @@ def scrapImages():
             
             # print("****************File Saved***************")    
             pix1 = fitz.Pixmap(fitz.csRGB, base_image)
-            # pix1._writeIMG(f"{path}//Image{latestDownloadedFileName} - {page_index} - {image_index}.jpeg" , xref)
-            pix1._writeIMG(f"Image{latestDownloadedFileName} - {page_index} - {image_index}.jpeg" , xref)
+            pix1._writeIMG(f"{path}//Image{latestDownloadedFileName} - {page_index} - {image_index}.jpeg" , xref)
+            # pix1._writeIMG(f"Image{latestDownloadedFileName} - {page_index} - {image_index}.jpeg" , xref)
             print("****************File Saved***************")
             pix1 = None
             base_image = None
