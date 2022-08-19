@@ -9,6 +9,8 @@ from tkinter import Tk
 
 import os
 
+from difPy import dif
+
 # url = 'https://sci-hub.hkvisa.net/https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1365-2230.2009.03220.x'
 # url = 'https://sci-hub.hkvisa.net/https://ijponline.biomedcentral.com/articles/10.1186/s13052-021-01097-2'
 # url = 'https://sci-hub.hkvisa.net/https://www.sciencedirect.com/science/article/pii/S0002817714660359'
@@ -121,6 +123,26 @@ def scrapImages():
             print("****************File Saved***************")
             pix1 = None
             base_image = None
+            
+            
+def RemoveDuplicates(p):
+    search = dif(p) 
+    print(search.result)
+    print("************************************************")
+    l1 = list(search.result.values())
+    print(l1)
+    print("************************************************")
+    count = 0
+    for i in l1:
+        aa = l1[count]['duplicates']
+        print(aa)
+        count += 1
+        for i in aa:
+            print(i)
+            try:
+                os.remove(i)
+            except:
+                pass
 
 
 
@@ -157,5 +179,6 @@ for l in link:
     except:
         print("The pdf is not even listed on Sci Hub : " , l)
     time.sleep(5)
-exit(driver)
 
+RemoveDuplicates(path)
+exit(driver)
