@@ -4,8 +4,8 @@ import time
 import fitz # PyMuPDF
 from PIL import Image
 
-from tkinter.filedialog import askdirectory
-from tkinter import Tk
+# from tkinter.filedialog import askdirectory
+# from tkinter import Tk
 
 import os
 
@@ -87,12 +87,12 @@ def getDownLoadedFileName(waitTime):
                 return driver.execute_script("return document.querySelector('downloads-manager').shadowRoot.querySelector('#downloadsList downloads-item').shadowRoot.querySelector('div#content  #file-link').text")
         except:
             print("****************Cannot Get Name of Download File*************** ")
-        time.sleep(3)
+        time.sleep(1)
         if time.time() > endTime:
             break
 
 def scrapImages():
-    latestDownloadedFileName = getDownLoadedFileName(15) #waiting 15 seconds to complete the download
+    latestDownloadedFileName = getDownLoadedFileName(120) #waiting 2 minutes to complete the download
     print("****************Download File Name *************** " , latestDownloadedFileName)
     # file path you want to extract images from
     file = path + "\\" + latestDownloadedFileName
@@ -127,18 +127,14 @@ def scrapImages():
             
 def RemoveDuplicates(p):
     search = dif(p) 
-    print(search.result)
-    print("************************************************")
     l1 = list(search.result.values())
-    print(l1)
-    print("************************************************")
     count = 0
     for i in l1:
         aa = l1[count]['duplicates']
-        print(aa)
+        # print(aa)
         count += 1
         for i in aa:
-            print(i)
+            print("Removing : " , i )
             try:
                 os.remove(i)
             except:
