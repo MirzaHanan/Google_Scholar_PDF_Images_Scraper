@@ -150,10 +150,10 @@ if __name__ == "__main__":
         except:
             print("The pdf is not even listed on Sci Hub : " , l)
         time.sleep(5)
-
+    # All windows related to driver instance will quit
+    driver.quit()
     # END OF SCRAPIING PROCESS
+    
     # Remove duplicates Images
     RemoveDuplicates(path)
     
-    # All windows related to driver instance will quit
-    driver.quit()
