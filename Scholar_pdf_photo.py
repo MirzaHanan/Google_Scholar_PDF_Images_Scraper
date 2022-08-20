@@ -9,24 +9,12 @@ import os
 from difPy import dif
 
 
-path = input("Enter The Path to Save Images : ")
-url = input("Enter the URL (Google Scholar Search result) : ") 
-
-
 def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS # If .exe file is running get base path
     except Exception:
         base_path = os.path.dirname(__file__) # If .py file is running get base path
     return os.path.join(base_path, relative_path)
-
-options = webdriver.ChromeOptions()
-options.add_experimental_option('prefs', {
-"download.default_directory": path, #Change default directory for downloads
-"download.prompt_for_download": False, #To auto download the file
-"download.directory_upgrade": True,
-"plugins.always_open_pdf_externally": True #It will not show PDF directly in chrome
-})
 
 
 def getDownLoadedFileName(waitTime):
@@ -43,13 +31,13 @@ def getDownLoadedFileName(waitTime):
             # get downloaded percentage
             downloadPercentage = driver.execute_script(
                 "return document.querySelector('downloads-manager').shadowRoot.querySelector('#downloadsList downloads-item').shadowRoot.querySelector('#progress').value")
-            print("Something")
+            
             # check if downloadPercentage is 100 (otherwise the script will keep waiting)
             if downloadPercentage == 100:
                 # return the file name once the download is completed
                 return driver.execute_script("return document.querySelector('downloads-manager').shadowRoot.querySelector('#downloadsList downloads-item').shadowRoot.querySelector('div#content  #file-link').text")
         except:
-            print('"Cannot Get Name of Download File"')
+            print('"Error: Cannot Get Name of Download File"')
         time.sleep(1)
         if time.time() > endTime:
             break
@@ -62,7 +50,6 @@ def scrapImages():
     # open the file
     pdf_file = fitz.open(file)
     # iterate over PDF pages
-    print("****************File Opened***************")
     for page_index in range(len(pdf_file)):
         # get the page itself
         page = pdf_file[page_index]
@@ -80,7 +67,6 @@ def scrapImages():
             pix1 = fitz.Pixmap(fitz.csRGB, base_image)
             #Save the Image
             pix1._writeIMG(f"{path}//Image{latestDownloadedFileName} - {page_index} - {image_index}.jpeg" , xref)
-            print("****************Image Saved***************")
             pix1 = None
             base_image = None
             
@@ -106,8 +92,20 @@ def RemoveDuplicates(p):
 
 if __name__ == "__main__":
 
-    # Stars the chrome
+    path = input("Enter The Path to Save Images : ")
+    url = input("Enter the URL (Google Scholar Search result) : ") 
+     
+    options = webdriver.ChromeOptions()
+    options.add_experimental_option('prefs', {
+    "download.default_directory": path, #Change default directory for downloads
+    "download.prompt_for_download": False, #To auto download the file
+    "download.directory_upgrade": True,
+    "plugins.always_open_pdf_externally": True #It will not show PDF directly in chrome
+    })
+    
+    # Stars the chrome with chrome options
     driver = webdriver.Chrome(resource_path('./driver/chromedriver.exe') , options=options) 
+    
     try:
         # GET the Google Scholar URL
         driver.get(url)
@@ -137,6 +135,7 @@ if __name__ == "__main__":
                 continue
             except:
                 pass 
+            
         # if the link does not ends with "pdf" takes it to sci-hub
         new_link = 'https://sci-hub.hkvisa.net/' + l
         # navigate to new link
@@ -149,6 +148,8 @@ if __name__ == "__main__":
         except:
             print("The pdf is not even listed on Sci Hub : " , l)
         time.sleep(5)
-
+    
     RemoveDuplicates(path)
-    exit(driver)
+    
+    # All windows related to driver instance will quit
+    driver.quit()
