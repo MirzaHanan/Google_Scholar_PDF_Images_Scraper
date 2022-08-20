@@ -1,55 +1,24 @@
 from selenium import webdriver
-import time
 
 import fitz # PyMuPDF
 from PIL import Image
 
-# from tkinter.filedialog import askdirectory
-# from tkinter import Tk
-
+import time
 import os
 
 from difPy import dif
 
-# url = 'https://sci-hub.hkvisa.net/https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1365-2230.2009.03220.x'
-# url = 'https://sci-hub.hkvisa.net/https://ijponline.biomedcentral.com/articles/10.1186/s13052-021-01097-2'
-# url = 'https://sci-hub.hkvisa.net/https://www.sciencedirect.com/science/article/pii/S0002817714660359'
 
-# url = 'https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=oral+ulcers+clinical&btnG'
-
-
-# path = input("Enter The Path to Save Images : ")
-
-# Tk().withdraw()
-# path = ''
-# path =  str(askdirectory(title="Select a folder"))
-# print(type(path))
-# print(path)
 path = input("Enter The Path to Save Images : ")
 url = input("Enter the URL (Google Scholar Search result) : ") 
 
 
-# driver.get(url)
-# time.sleep(2)
-# download_btton = driver.find_element('xpath' , '//*[@id="buttons"]/ul/li[2]/a')
-# download_btton.click()
-
-# print("****************File Download***************")
-
-# def getDowload(link):
-# path = 'C:\\Users\\fujitsu\\Downloads\\Documents'
-
-# Check whether the specified
-# path exists or not
-# isExist = os.path.exists(path)
-# if isExist == False:
-#     os.mkdir(path)
-    
-
-# chrome_options = webdriver.ChromeOptions()
-# prefs = {'download.default_directory' : path}
-# chrome_options.add_experimental_option('prefs', prefs)
-# driver = webdriver.Chrome(chrome_options=chrome_options)
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS # If .exe file is running get base path
+    except Exception:
+        base_path = os.path.dirname(__file__) # If .py file is running get base path
+    return os.path.join(base_path, relative_path)
 
 options = webdriver.ChromeOptions()
 options.add_experimental_option('prefs', {
@@ -58,13 +27,7 @@ options.add_experimental_option('prefs', {
 "download.directory_upgrade": True,
 "plugins.always_open_pdf_externally": True #It will not show PDF directly in chrome
 })
-driver = webdriver.Chrome(options=options)
 
-try:
-    driver.get(url)
-except :
-    print("Enter valid URL")
-link = []
 
 def getDownLoadedFileName(waitTime):
 # method to get the downloaded file name
@@ -86,14 +49,14 @@ def getDownLoadedFileName(waitTime):
                 # return the file name once the download is completed
                 return driver.execute_script("return document.querySelector('downloads-manager').shadowRoot.querySelector('#downloadsList downloads-item').shadowRoot.querySelector('div#content  #file-link').text")
         except:
-            print("****************Cannot Get Name of Download File*************** ")
+            print('"Cannot Get Name of Download File"')
         time.sleep(1)
         if time.time() > endTime:
             break
 
 def scrapImages():
     latestDownloadedFileName = getDownLoadedFileName(120) #waiting 2 minutes to complete the download
-    print("****************Download File Name *************** " , latestDownloadedFileName)
+    print("Download File Name : " , latestDownloadedFileName)
     # file path you want to extract images from
     file = path + "\\" + latestDownloadedFileName
     # open the file
@@ -113,14 +76,11 @@ def scrapImages():
             # get the XREF of the image
             xref = img[0]
             # extract the image bytes
-            # base_image = pdf_file.extract_image(xref)
             base_image = fitz.Pixmap(pdf_file, xref)
-            
-            # print("****************File Saved***************")    
             pix1 = fitz.Pixmap(fitz.csRGB, base_image)
+            #Save the Image
             pix1._writeIMG(f"{path}//Image{latestDownloadedFileName} - {page_index} - {image_index}.jpeg" , xref)
-            # pix1._writeIMG(f"Image{latestDownloadedFileName} - {page_index} - {image_index}.jpeg" , xref)
-            print("****************File Saved***************")
+            print("****************Image Saved***************")
             pix1 = None
             base_image = None
             
@@ -131,7 +91,6 @@ def RemoveDuplicates(p):
     count = 0
     for i in l1:
         aa = l1[count]['duplicates']
-        # print(aa)
         count += 1
         for i in aa:
             print("Removing : " , i )
@@ -141,40 +100,51 @@ def RemoveDuplicates(p):
                 pass
 
 
+if __name__ == "__main__":
 
-search_results = driver.find_elements("css selector" , "div.gs_r.gs_or.gs_scl")
-for single_result in search_results:
-    # print(single_result)
-    s = single_result.find_element("css selector" , "h3 a")
-    link.append(s.get_attribute('href'))
+    # Stars the chrome
+    driver = webdriver.Chrome(resource_path('./driver/chromedriver.exe') , options=options) 
+    try:
+        # GET the Google Scholar URL
+        driver.get(url)
+    except :
+        print("Re Run the App And Enter valid URL")
 
+    #list of link type to hold all the URLs Scraped from google scholar website
+    link = []
 
-# Open a new tab
-driver.execute_script("window.open()")
-for l in link:
-    
-    # switch to new tab
-    driver.switch_to.window(driver.window_handles[-1])
-    if  l.split(".")[-1] == "pdf":
+    search_results = driver.find_elements("css selector" , "div.gs_r.gs_or.gs_scl")
+    for single_result in search_results:
+        s = single_result.find_element("css selector" , "h3 a")
+        link.append(s.get_attribute('href'))
+
+    # Open a new tab
+    driver.execute_script("window.open()")
+    for l in link:        
+        # switch to new tab
+        driver.switch_to.window(driver.window_handles[-1])
+        # if the link ends with "pdf" the download it directly
+        if  l.split(".")[-1] == "pdf":
+            try:
+                # navigate to new link "l"
+                driver.get(l)
+                scrapImages()    
+                driver.close()
+                continue
+            except:
+                pass 
+        # if the link does not ends with "pdf" takes it to sci-hub
+        new_link = 'https://sci-hub.hkvisa.net/' + l
+        # navigate to new link
+        driver.get(new_link)
         try:
-            driver.get(l)
+            download_btton = driver.find_element('xpath' , '//*[@id="buttons"]/ul/li[2]/a')
+            download_btton.click()
             scrapImages()    
             driver.close()
-            continue
         except:
-            pass 
-    
-    new_link = 'https://sci-hub.hkvisa.net/' + l
-    # navigate to new link
-    driver.get(new_link)
-    try:
-        download_btton = driver.find_element('xpath' , '//*[@id="buttons"]/ul/li[2]/a')
-        download_btton.click()
-        scrapImages()    
-        driver.close()
-    except:
-        print("The pdf is not even listed on Sci Hub : " , l)
-    time.sleep(5)
+            print("The pdf is not even listed on Sci Hub : " , l)
+        time.sleep(5)
 
-RemoveDuplicates(path)
-exit(driver)
+    RemoveDuplicates(path)
+    exit(driver)
