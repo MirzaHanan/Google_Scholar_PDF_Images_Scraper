@@ -86,9 +86,13 @@ def scrapImages():
             
             
 def RemoveDuplicates(p):
-    search = dif(p) 
-    l1 = list(search.result.values())
-    count = 0
+    # Search the folder for duplicate Images
+    search = dif(p)  
+    # Store the duplicate values in l1
+    l1 = list(search.result.values()) 
+    # Counter to count the loop
+    count = 0 
+    # Loop to get the exact path of duplicate file and delete it
     for i in l1:
         aa = l1[count]['duplicates']
         count += 1
