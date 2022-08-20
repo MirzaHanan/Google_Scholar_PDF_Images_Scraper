@@ -114,12 +114,14 @@ if __name__ == "__main__":
 
     #list of link type to hold all the URLs Scraped from google scholar website
     link = []
-
+    
+    # Get all the links from google scholar search page
     search_results = driver.find_elements("css selector" , "div.gs_r.gs_or.gs_scl")
     for single_result in search_results:
         s = single_result.find_element("css selector" , "h3 a")
         link.append(s.get_attribute('href'))
 
+    # START THE SCRAPING PROCESS
     # Open a new tab
     driver.execute_script("window.open()")
     for l in link:        
@@ -148,7 +150,9 @@ if __name__ == "__main__":
         except:
             print("The pdf is not even listed on Sci Hub : " , l)
         time.sleep(5)
-    
+
+    # END OF SCRAPIING PROCESS
+    # Remove duplicates Images
     RemoveDuplicates(path)
     
     # All windows related to driver instance will quit
