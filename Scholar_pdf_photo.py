@@ -9,6 +9,7 @@ import os
 from difPy import dif
 
 
+
 def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS # If .exe file is running get base path
@@ -37,14 +38,13 @@ def getDownLoadedFileName(waitTime):
                 # return the file name once the download is completed
                 return driver.execute_script("return document.querySelector('downloads-manager').shadowRoot.querySelector('#downloadsList downloads-item').shadowRoot.querySelector('div#content  #file-link').text")
         except:
-            print('"Error: Cannot Get Name of Download File"')
+            pass
         time.sleep(1)
         if time.time() > endTime:
             break
 
 def scrapImages():
     latestDownloadedFileName = getDownLoadedFileName(120) #waiting 2 minutes to complete the download
-    print("Download File Name : " , latestDownloadedFileName)
     # file path you want to extract images from
     file = path + "\\" + latestDownloadedFileName
     # open the file
@@ -91,6 +91,7 @@ def RemoveDuplicates(p):
 
 
 if __name__ == "__main__":
+    
 
     path = input("Enter The Path to Save Images : ")
     url = input("Enter the URL (Google Scholar Search result) : ") 
@@ -105,7 +106,8 @@ if __name__ == "__main__":
     
     # Stars the chrome with chrome options
     driver = webdriver.Chrome(resource_path('./driver/chromedriver.exe') , options=options) 
-    
+    driver.set_window_position(0, 0)
+
     try:
         # GET the Google Scholar URL
         driver.get(url)
@@ -113,47 +115,72 @@ if __name__ == "__main__":
         print("Re Run the App And Enter valid URL")
 
     #list of link type to hold all the URLs Scraped from google scholar website
-    link = []
-    
-    # Get all the links from google scholar search page
-    search_results = driver.find_elements("css selector" , "div.gs_r.gs_or.gs_scl")
-    for single_result in search_results:
-        s = single_result.find_element("css selector" , "h3 a")
-        link.append(s.get_attribute('href'))
-
-    # START THE SCRAPING PROCESS
-    # Open a new tab
-    driver.execute_script("window.open()")
-    for l in link:        
-        # switch to new tab
-        driver.switch_to.window(driver.window_handles[-1])
-        # if the link ends with "pdf" the download it directly
-        if  l.split(".")[-1] == "pdf":
+    while(True):
+        link = []    
+        captcha = True
+        # Get all the links from google scholar search page
+        while(captcha):
+            search_results = driver.find_elements("css selector" , "div.gs_r.gs_or.gs_scl")
+            for single_result in search_results:
+                    try:
+                        try:
+                            s = single_result.find_element("css selector" , "h3 a")
+                        except:
+                            continue
+                        link.append(s.get_attribute('href'))
+                        print(s.get_attribute('href'))
+                        captcha = False
+                    except:
+                        print("Captcha occured paused for 30 sec")
+                        time.sleep(30) # Pause for 30 seconds when captcha arises
+                        captcha = True
+        # START THE SCRAPING PROCESS
+        # Open a new tab
+        driver.execute_script("window.open()")
+        for l in link:        
+            # switch to new tab
+            driver.switch_to.window(driver.window_handles[-1])
+            # if the link ends with "pdf" the download it directly
+            if  l.split(".")[-1] == "pdf":
+                try:
+                    # navigate to new link "l"
+                    driver.get(l)
+                    scrapImages()    
+                    driver.close()
+                    continue
+                except:
+                    pass 
+                
+            # if the link does not ends with "pdf" takes it to sci-hub
+            new_link = 'https://sci-hub.hkvisa.net/' + l
+            # navigate to new link
+            driver.get(new_link)
             try:
-                # navigate to new link "l"
-                driver.get(l)
+                download_btton = driver.find_element('xpath' , '//*[@id="buttons"]/ul/li[2]/a')
+                download_btton.click()
                 scrapImages()    
                 driver.close()
-                continue
             except:
-                pass 
-            
-        # if the link does not ends with "pdf" takes it to sci-hub
-        new_link = 'https://sci-hub.hkvisa.net/' + l
-        # navigate to new link
-        driver.get(new_link)
+                print("The pdf is not even listed on Sci Hub : " , l)
+            time.sleep(5)
+        # END OF SCRAPIING PROCESS
+        
+        #Close all open tab but first one
+        while(True):    
+            if driver.window_handles[-1] == driver.window_handles[0]:
+                break
+            else:
+                driver.switch_to.window(driver.window_handles[-1])
+                driver.close()
+                
+        # Remove duplicates Images
+        RemoveDuplicates(path)
+        #Switch back to the old tab or window
+        driver.switch_to.window(driver.window_handles[0])
         try:
-            download_btton = driver.find_element('xpath' , '//*[@id="buttons"]/ul/li[2]/a')
-            download_btton.click()
-            scrapImages()    
-            driver.close()
+            next_button = driver.find_element("css selector" , 'td[align="left"] b')
+            next_button.click()
         except:
-            print("The pdf is not even listed on Sci Hub : " , l)
-        time.sleep(5)
-    # All windows related to driver instance will quit
-    driver.quit()
-    # END OF SCRAPIING PROCESS
-    
-    # Remove duplicates Images
-    RemoveDuplicates(path)
-    
+            # All windows related to driver instance will quit
+            driver.quit()
+            break
