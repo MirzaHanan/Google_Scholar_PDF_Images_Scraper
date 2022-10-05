@@ -11,9 +11,9 @@ This scraper takes two inputs from user:
 Then the scraper Open Chrome Browser 
 GoTo the provided google scholar search results page
 Check all the Indiviual links on the search result page
-- If the page is a link to pdf then start downloading it directly
-- If the page is not a link to pdf the go to Sci-Hub and download the pdf from there
-- If the pdf is not even listed to Sci-Hub the Ignore that link.
+- If the research paper is free then start downloading it directly
+- If the research paper is paid the go to Sci-Hub and download the pdf from there
+- If the research paper is not even listed to Sci-Hub then Ignore that link.
 
 After Downloading the pdf from search result page:
 - Collect all the Images from Downloaded Pdf
@@ -25,3 +25,5 @@ and continue doing that untill the last link on that page.
 After downloading and collecting all the images from a single search result page
 
 It removes all the duplicate images collected from all the pdfs
+
+After removing duplicates goto next page in search results and repeat the whole process untill its last page in the search.
